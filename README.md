@@ -8,3 +8,9 @@
 - This gives us the conversion factor of `20.90876186340115`, which we add to `calculate_counts_per_µw_per_cm2_from_spectral_responsivity.py`
 - Now we need factors of the different channel width, meaning how often red, green, blue's channel width fit into the clear channel. This is done width `calculate_spectral_width_factors.py`, which we add to `calculate_counts_per_µw_per_cm2_from_spectral_responsivity.py`, too.
 - Afterwards we can calculate the average responsivity of each color channel's FWHM, convert it to counts/µW/cm² and correct the result for the smaller channel width with the factors we just calculated - this is done with `calculate_counts_per_µw_per_cm2_from_spectral_responsivity.py`.
+
+# Lux:
+
+CIE Dataset: https://cie.co.at/datatable/cie-spectral-luminous-efficiency-photopic-vision
+
+
