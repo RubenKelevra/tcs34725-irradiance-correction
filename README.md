@@ -1,4 +1,4 @@
-# Process of correction:
+# Irradiation:
 
 - Used engauge to get the color curves from the spectral resonsivity curve from the spec sheet (TCS34725_color_curve.jxl).
 - This is saved in the TCS34725_color_curve.dig file for future modifications
