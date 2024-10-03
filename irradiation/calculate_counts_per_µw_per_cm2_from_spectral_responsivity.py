@@ -51,7 +51,7 @@ green_min_fwhm, green_max_fwhm, green_avg_response, green_peak = calculate_fwhm_
 blue_min_fwhm, blue_max_fwhm, blue_avg_response, blue_peak = calculate_fwhm_and_avg_response("Blue", blue_interpolated)
 
 # Conversion factor - result from calculate_conversion_factor_for_graph_data_to_µm_per_cm2_response_by_simulation.py
-conversion_factor = 20.90876186340115
+conversion_factor = 20.797879440786556
 # Result from calculate_spectral_width_factors.py
 spectral_width_conversion_factor_red=3.9464285714285716
 spectral_width_conversion_factor_green=2.7974683544303796

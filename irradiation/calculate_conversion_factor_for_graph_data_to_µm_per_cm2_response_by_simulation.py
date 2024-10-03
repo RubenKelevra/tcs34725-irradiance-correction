@@ -31,9 +31,9 @@ def gaussian(wavelength, center, halfwidth):
 
 # Define the dominant wavelengths and halfwidths for each LED, along with counts/µW/cm² from the datasheet
 leds = {
-    'Blue': {'center': 465, 'halfwidth': 22 / 2, 'counts_per_uW_cm2': 13.8},
-    'Green': {'center': 525, 'halfwidth': 35 / 2, 'counts_per_uW_cm2': 16.6},
-    'Red': {'center': 615, 'halfwidth': 15 / 2, 'counts_per_uW_cm2': 19.5}
+    'Blue': {'center': 465, 'halfwidth': 22, 'counts_per_uW_cm2': 13.8},
+    'Green': {'center': 525, 'halfwidth': 35, 'counts_per_uW_cm2': 16.6},
+    'Red': {'center': 615, 'halfwidth': 15, 'counts_per_uW_cm2': 19.5}
 }
 
 # Function to calculate unitless average response based on the LED's emission curve
