@@ -2,72 +2,79 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import PchipInterpolator
 
+# Read the CSV file
 data = pd.read_csv('TCS34725_spectral_responsivity.csv')
 
 # Define the wavelength range for interpolation
-wavelength_range = np.arange(data['Wavelength'].min(), data['Wavelength'].max() + 1, 1)
+wavelength_range = np.arange(int(data['Wavelength'].min()), int(data['Wavelength'].max()) + 1, 1)
 
-# Interpolation function for each color channel
+# Function to interpolate values for a given channel
 def pchip_interpolate_channel(channel_data, column_name):
     pchip_func = PchipInterpolator(channel_data['Wavelength'], channel_data[column_name])
     interpolated_values = pchip_func(wavelength_range)
     return interpolated_values
 
-# Interpolating Red, Green, and Blue channels
+# Interpolate each channel
+clear_interpolated = pchip_interpolate_channel(data, 'Clear')
 red_interpolated = pchip_interpolate_channel(data, 'Red')
 green_interpolated = pchip_interpolate_channel(data, 'Green')
 blue_interpolated = pchip_interpolate_channel(data, 'Blue')
 
-# Function to calculate FWHM and average response within the FWHM range
-def calculate_fwhm_and_avg_response(channel_name, interpolated_values):
-    # Find the peak value
-    peak_value = np.max(interpolated_values)
-
-    # Find the half-maximum value (50% of peak)
-    half_max = peak_value * 0.5
-
-    # Find indices where the values cross the half-maximum (FWHM edges)
-    above_half_max = np.where(interpolated_values >= half_max)[0]
-
-    if len(above_half_max) > 0:
-        left_edge = above_half_max[0]
-        right_edge = above_half_max[-1]
+# Function to determine FWHM of a given channel
+def calculate_fwhm(wavelength, response):
+    half_max = max(response) / 2
+    indices = np.where(response >= half_max)[0]
+    if len(indices) > 0:
+        fwhm_range = wavelength[indices[0]:indices[-1] + 1]
+        return fwhm_range
     else:
-        raise ValueError(f"Could not find FWHM for {channel_name}")
+        return np.array([])
 
-    # Extract the wavelength range corresponding to FWHM
-    fwhm_range = wavelength_range[left_edge:right_edge + 1]
-    fwhm_responses = interpolated_values[left_edge:right_edge + 1]
+# Calculate FWHM ranges for each channel
+fwhm_range_clear = calculate_fwhm(wavelength_range, clear_interpolated)
+fwhm_range_red = calculate_fwhm(wavelength_range, red_interpolated)
+fwhm_range_green = calculate_fwhm(wavelength_range, green_interpolated)
+fwhm_range_blue = calculate_fwhm(wavelength_range, blue_interpolated)
 
-    # Calculate the average response within the FWHM range
-    avg_response = np.mean(fwhm_responses)
+# Function to calculate total response by integrating over a specified range
+def calculate_total_response_in_range(interpolated_values, specific_wavelength_range):
+    mask = (wavelength_range >= specific_wavelength_range.min()) & (wavelength_range <= specific_wavelength_range.max())
+    total_response = np.trapezoid(interpolated_values[mask], wavelength_range[mask])
+    return total_response
 
-    # Return the FWHM range as the min and max wavelengths
-    return fwhm_range.min(), fwhm_range.max(), avg_response, peak_value
+# Calculate total responses using FWHM ranges for each channel
+clear_total_response = calculate_total_response_in_range(clear_interpolated, fwhm_range_clear)
+red_total_response = calculate_total_response_in_range(red_interpolated, fwhm_range_red)
+green_total_response = calculate_total_response_in_range(green_interpolated, fwhm_range_green)
+blue_total_response = calculate_total_response_in_range(blue_interpolated, fwhm_range_blue)
 
-# Calculate FWHM and average response for each color channel
-red_min_fwhm, red_max_fwhm, red_avg_response, red_peak = calculate_fwhm_and_avg_response("Red", red_interpolated)
-green_min_fwhm, green_max_fwhm, green_avg_response, green_peak = calculate_fwhm_and_avg_response("Green", green_interpolated)
-blue_min_fwhm, blue_max_fwhm, blue_avg_response, blue_peak = calculate_fwhm_and_avg_response("Blue", blue_interpolated)
+# Calculate ratios relative to the Clear channel
+red_ratio = red_total_response / clear_total_response
+green_ratio = green_total_response / clear_total_response
+blue_ratio = blue_total_response / clear_total_response
 
-# Conversion factor - result from calculate_conversion_factor_for_graph_data_to_µm_per_cm2_response_by_simulation.py
+# Conversion factor from the Clear channel (as previously calculated)
 conversion_factor = 20.797879440786556
-# Result from calculate_spectral_width_factors.py
-spectral_width_conversion_factor_red=3.9464285714285716
-spectral_width_conversion_factor_green=2.7974683544303796
-spectral_width_conversion_factor_blue=2.1666666666666665
 
-# Apply the conversion factor
-red_avg_response_converted = red_avg_response * conversion_factor
-green_avg_response_converted = green_avg_response * conversion_factor
-blue_avg_response_converted = blue_avg_response * conversion_factor
+# Adjust conversion factors for each color channel
+red_conversion_factor_16x_24ms = conversion_factor * red_ratio
+green_conversion_factor_16x_24ms = conversion_factor * green_ratio
+blue_conversion_factor_16x_24ms = conversion_factor * blue_ratio
 
-# Output the results (printing min and max FWHM range)
-print(f"Red Channel FWHM Range: {red_min_fwhm} nm to {red_max_fwhm} nm")
-print(f"Red Channel Average Response: {red_avg_response}, Converted to counts/µW/cm² for 1x gain: {red_avg_response_converted/spectral_width_conversion_factor_red}")
+# Adjust conversion factors for 1x gain
+gain_factor = 16  # Since the original data is at 16x gain
 
-print(f"Green Channel FWHM Range: {green_min_fwhm} nm to {green_max_fwhm} nm")
-print(f"Green Channel Average Response: {green_avg_response}, Converted to counts/µW/cm² for 1x gain: {green_avg_response_converted/spectral_width_conversion_factor_green}")
+red_conversion_factor_1x_24ms = red_conversion_factor_16x_24ms / gain_factor
+green_conversion_factor_1x_24ms = green_conversion_factor_16x_24ms / gain_factor
+blue_conversion_factor_1x_24ms = blue_conversion_factor_16x_24ms / gain_factor
 
-print(f"Blue Channel FWHM Range: {blue_min_fwhm} nm to {blue_max_fwhm} nm")
-print(f"Blue Channel Average Response: {blue_avg_response}, Converted to counts/µW/cm² for 1x gain: {blue_avg_response_converted/spectral_width_conversion_factor_blue}")
+integration_time_factor = 2.4 / 24.0
+# Adjust conversion factors for 1x gain and 2.4 ms integration time
+red_conversion_factor_1x_2_4ms = red_conversion_factor_1x_24ms * integration_time_factor
+green_conversion_factor_1x_2_4ms = green_conversion_factor_1x_24ms * integration_time_factor
+blue_conversion_factor_1x_2_4ms = blue_conversion_factor_1x_24ms * integration_time_factor
+
+print("Conversion Factors at 1x Gain and 2.4 ms Integration Time:")
+print(f"Red Channel: {red_conversion_factor_1x_2_4ms} counts/µW/cm²")
+print(f"Green Channel: {green_conversion_factor_1x_2_4ms} counts/µW/cm²")
+print(f"Blue Channel: {blue_conversion_factor_1x_2_4ms} counts/µW/cm²")
