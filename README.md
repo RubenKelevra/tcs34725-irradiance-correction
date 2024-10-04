@@ -12,4 +12,8 @@
 
 CIE Dataset: https://cie.co.at/datatable/cie-spectral-luminous-efficiency-photopic-vision
 
+After downloading the dataset, the correction factors can be calculated with `lux/calculate_irradiation_to_lux_conversion_factors_with_CIE_018_2019_responses.py`. This script also requires the sensor resonsivity curves from the `calibration_data` folder.
 
+- It will use the previously calculated red, green, blue channel normalisations for irradiance to scale the channel responses of the sensor relative to each other.
+- Then it will normalise all three channels to 1.0, and compare them to the CIE dataset, to create correction factors per channel based on human vision. However this is only done over the FWHM of each color channel.
+- Afterwards the correction factors are normalized with known conversions of irradiation to lux.
