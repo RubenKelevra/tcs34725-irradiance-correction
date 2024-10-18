@@ -20,9 +20,6 @@ S_inv = np.linalg.inv(S)
 # Compute the transformation matrix
 C = np.dot(T, S_inv)
 
-# Adjust the matrix for 1x gain and 2.4 ms integration time
-C = C / 160.0
-
 # Display the transformation matrix
 print("Transformation matrix (C):")
 print(C)
